@@ -24,8 +24,8 @@ An easy-to-use Python script that integrates various tools for web security test
 First, you need to clone the repository. Open a terminal and run the following commands:
 
 ```bash
-git clone https://github.com/kristiangasic/websec.git
-cd websec
+git clone https://github.com/kristiangasic/WebSec.git
+cd WebSec
 ```
 
 ### 2. **Install Dependencies**
