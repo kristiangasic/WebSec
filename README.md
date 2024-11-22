@@ -102,7 +102,7 @@ sudo apt install -y ffuf
 Once all the tools are installed, you can run the script:
 
 ```bash
-python3 WebSec-Beta.py
+python3 WebSec-beta.py
 ```
 
 You will then be prompted to choose an option:
