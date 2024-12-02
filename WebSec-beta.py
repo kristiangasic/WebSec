@@ -7,10 +7,12 @@ import requests
 from urllib.parse import quote, urlparse
 from pyExploitDb import PyExploitDb
 
+
+
 # Logging configuration
 logging.basicConfig(filename='done.log', level=logging.INFO, format='%(asctime)s - %(message)s')
 
-# List of CVEs (as of 02.12.2024)
+# Liste der CVEs 02.12.2024
 WORDPRESS_CVES = [
     "CVE-2024-31211",
     "CVE-2024-31210",
@@ -120,15 +122,15 @@ def get_exploits_for_wordpress():
     exploits = []
     for cve in WORDPRESS_CVES:
         try:
-            # Search for exploits for each CVE
+            # Suchen nach Exploits für jedes CVE
             search_results = pyExploitDb.search(cve)
             if search_results:
                 exploits.append((cve, search_results))
-                logging.info(f"Exploit found for {cve}: {search_results}")
+                logging.info(f"Exploit für {cve} gefunden: {search_results}")
             else:
-                logging.info(f"No exploit found for {cve}.")
+                logging.info(f"Kein Exploit für {cve} gefunden.")
         except Exception as e:
-            logging.error(f"Error searching for {cve}: {e}")
+            logging.error(f"Fehler beim Suchen nach {cve}: {e}")
     return exploits
 
 # WPScan to scan for WordPress vulnerabilities
@@ -144,20 +146,23 @@ def run_amass(domain):
 def run_nikto(domain):
     subprocess.run(["nikto", "-h", domain, "-C", "all"])
 
-# Gobuster to brute-force directories and files
+# Gobuster verwenden, um Verzeichnisse und Dateien zu brute-forcen
 def run_gobuster(domain):
-    subprocess.run(["gobuster", "dir", "-u", f"http://{domain}", "-w", "/usr/share/wordlists/dirbuster/directory-list-2.3-medium.txt"])
+    formatted_url = validate_and_format_url(domain)  # Sicherstellen, dass die URL richtig formatiert ist
+    subprocess.run(["gobuster", "dir", "-u", f"{formatted_url}", "-w", "/usr/share/wordlists/dirbuster/directory-list-2.3-medium.txt"])
 
-# Ffuf to brute-force directories and files
+# Ffuf verwenden, um Verzeichnisse und Dateien zu brute-forcen
 def run_ffuf(domain):
-    subprocess.run(["ffuf", "-u", f"http://{domain}/FUZZ", "-w", "/usr/share/wordlists/dirbuster/directory-list-2.3-medium.txt"])
+    formatted_url = validate_and_format_url(domain)  # Sicherstellen, dass die URL richtig formatiert ist
+    subprocess.run(["ffuf", "-u", f"{formatted_url}/FUZZ", "-w", "/usr/share/wordlists/dirbuster/directory-list-2.3-medium.txt"])
+
 
 # SQLMap to check for SQL injection vulnerabilities
 def run_sqlmap(url):
     subprocess.run(["sqlmap", "-u", url, "--batch", "--risk=3", "--level=5"])
 
-# Main scanning function
 def scan_domain(domain):
+    domain = validate_and_format_url(domain)  # Ensures no duplicate http://
     print(f"Starting full scan for: {domain}")
 
     if is_wordpress_site(domain):
@@ -200,8 +205,16 @@ def check_xss(url):
 
 # Function to validate and format the URL
 def validate_and_format_url(url):
+    # Entfernen von doppelt vorkommendem "http://" oder "https://"
+    if url.startswith("http://http://"):
+        url = url.replace("http://http://", "http://")
+    elif url.startswith("https://https://"):
+        url = url.replace("https://https://", "https://")
+    
+    # Wenn keine Protokollangabe vorhanden ist, füge "http://" hinzu
     if not url.startswith("http://") and not url.startswith("https://"):
         url = "http://" + url
+    
     return url
 
 # Menu function
@@ -237,7 +250,7 @@ def show_menu():
             run_amass(domain)
         elif choice == "6":
             domain = input("Enter domain for directory scan: ")
-            domain = validate_and_format_url(domain)
+            domain = validate_and_format_url(domain)  
             run_gobuster(domain)
             run_ffuf(domain)
         elif choice == "7":
@@ -251,6 +264,6 @@ if __name__ == "__main__":
     exploits = get_exploits_for_wordpress()
     if exploits:
         for cve, exploit in exploits:
-            print(f"Exploit found for {cve}: {exploit}")
+            print(f"Exploit für {cve}: {exploit}")
     else:
-        print("No exploits found.")
+        print("Keine Exploits gefunden.")
