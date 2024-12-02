@@ -30,38 +30,15 @@ def randomize_headers():
     }
     return headers
 
-
-def install_tools():
-    tools = {
-        "sqlmap": "sudo apt-get install -y sqlmap",
-        "wpscan": """
-            sudo apt update
-            sudo apt install -y ruby-full ruby-dev libcurl4-openssl-dev libffi-dev make zlib1g-dev
-            sudo gem install wpscan
-        """,
-        "amass": """
-            sudo apt update
-            sudo apt install -y golang-go
-            go install github.com/OWASP/Amass/v3/...@latest
-        """,
-        "nmap": "sudo apt-get install -y nmap",
-        "nikto": "sudo apt-get install -y nikto",
-        "gobuster": "sudo apt-get install -y gobuster",
-        "ffuf": "sudo apt install -y ffuf"
-    }
-
-    # Installiere alle Tools, die noch nicht installiert sind
-    for tool, install_command in tools.items():
-        print(f"Überprüfe {tool}...")
-
-        # Überprüfen, ob das Tool bereits installiert ist
-        try:
-            result = subprocess.run([tool, "--version"], stdout=subprocess.PIPE, stderr=subprocess.PIPE, check=True)
-            print(f"{tool} ist bereits installiert.")
-        except subprocess.CalledProcessError:
-            print(f"{tool} ist nicht installiert. Installation wird gestartet...")
-            subprocess.run(install_command, shell=True, check=True)
-            print(f"{tool} wurde erfolgreich installiert.")
+# Funktion zur Ausführung des Bash-Installationsskripts
+def run_bash_setup():
+    print("Starte das Installationsskript setup.sh...")
+    try:
+        subprocess.run(["sudo", "bash", "setup.sh"], check=True)
+        print("Alle Tools wurden erfolgreich installiert!")
+    except subprocess.CalledProcessError as e:
+        logging.error(f"Fehler beim Ausführen von setup.sh: {e}")
+        print(f"Fehler beim Ausführen von setup.sh: {e}")
 
 # Funktion zum Abrufen von Exploits von Exploit-DB für WordPress
 def get_exploits_for_wordpress():
@@ -89,7 +66,7 @@ def is_wordpress_site(url):
         "/wp-admin/",      # Admin-Verzeichnis
         "/wp-content/",    # Inhalte von WordPress
     ]
-    
+
     for indicator in indicators:
         test_url = url + indicator
         try:
@@ -99,7 +76,7 @@ def is_wordpress_site(url):
                 return True
         except requests.RequestException:
             continue  # Wenn die Seite nicht erreichbar ist, überspringen
-    
+
     return False
 
 # WPScan zum Scannen von WordPress-Schwachstellen
@@ -109,7 +86,7 @@ def run_wpscan(domain):
 
 # Amass zum Scannen von Subdomains
 def run_amass(domain):
-    subprocess.run(["amass", "enum", "-d", domain])
+    subprocess.run(["/snap/bin/amass", "enum", "-d", domain])
 
 # Nikto zum Überprüfen auf allgemeine Sicherheitslücken
 def run_nikto(domain):
@@ -130,7 +107,7 @@ def run_sqlmap(url):
 # Funktion zur Durchführung der vollständigen Sicherheitsprüfung
 def scan_domain(domain):
     print(f"Starte den vollständigen Scan für: {domain}")
-    
+
     # Überprüfen, ob es sich um eine WordPress-Seite handelt
     if is_wordpress_site(domain):
         # Holen der Exploits von Exploit-DB speziell für WordPress
@@ -141,7 +118,7 @@ def scan_domain(domain):
             print(f"Keine Exploits für WordPress gefunden.")
     else:
         print(f"Keine WordPress-Seite gefunden auf {domain}. Überspringe Exploit-Suche.")
-    
+
     # Weitere Scans durchführen
     run_amass(domain)
     run_wpscan(domain)
@@ -189,9 +166,9 @@ def show_menu():
         print("6. Verzeichnisscan durchführen (Gobuster/Ffuf)")
         print("7. Beenden")
         choice = input("Deine Wahl: ")
-        
+
         if choice == "1":
-            install_tools()
+            run_bash_setup()
         elif choice == "2":
             domain = input("Gib die zu scannende Domain ein: ")
             domain = validate_and_format_url(domain)  # URL validieren und formatieren
