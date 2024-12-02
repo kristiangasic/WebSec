@@ -25,6 +25,17 @@ else
     echo "WPScan ist bereits installiert."
 fi
 
+# pyExploitDb installieren
+echo "Installing pyExploitDb..."
+sudo pip3 install PyExploitDb --break-system-packages
+
+# Überprüfen, ob die Installation erfolgreich war
+if python3 -c "import pyExploitDb" &> /dev/null; then
+    echo "pyExploitDb successfully installed."
+else
+    echo "Failed to install pyExploitDb."
+fi
+
 # Überprüfen und Installieren von Amass
 echo "Überprüfe Amass..."
 if ! command -v amass &> /dev/null; then
