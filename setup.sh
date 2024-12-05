@@ -32,6 +32,25 @@ fi
 # Install other tools
 echo "Checking and installing other security tools..."
 
+# Check and install Nmap
+if ! command -v nmap &> /dev/null; then
+    echo "Nmap not found. Installing Nmap..."
+    sudo apt-get update
+    sudo apt-get install -y nmap
+    echo "Nmap installed."
+else
+    echo "Nmap is already installed."
+fi
+
+# Verify Nmap installation
+echo "Verifying Nmap installation..."
+if command -v nmap &> /dev/null; then
+    echo "Nmap version: $(nmap --version | head -n 1)"
+else
+    echo "Nmap installation failed."
+    exit 1
+fi
+
 # Check and install SQLmap
 if ! command -v sqlmap &> /dev/null; then
     sudo apt-get install -y sqlmap
