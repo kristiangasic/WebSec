@@ -7,7 +7,7 @@ export PATH=$PATH:/snap/bin
 echo "Checking if Git is installed..."
 if ! command -v git &> /dev/null; then
     echo "Git not found. Installing Git..."
-    sudo apt-get install -y git snapd python3 python3-pip
+    sudo apt-get install -y git snapd snap python3 python3-pip
 else
     echo "Git, python3 and pip3 is already installed."
 fi
