@@ -21,6 +21,7 @@ fi
 # Install pyExploitDb
 echo "Installing pyExploitDb..."
 sudo pip3 install pyExploitDb --break-system-packages
+sudo pip3 install pyExploitDb
 
 # Verify pyExploitDb installation
 if python3 -c "import pyExploitDb" &> /dev/null; then
