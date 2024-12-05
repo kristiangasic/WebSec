@@ -161,6 +161,32 @@ def run_ffuf(domain):
 def run_sqlmap(url):
     subprocess.run(["sqlmap", "-u", url, "--batch", "--risk=3", "--level=5"])
 
+# Function to perform Nmap scan
+def run_nmap(domain):
+    print(f"\nSelect Nmap scan type:")
+    print("1. Basic scan")
+    print("2. Aggressive scan")
+    print("3. Specific ports scan")
+    print("4. Custom scan (enter your own Nmap parameters)")
+    choice = input("Your choice: ")
+
+    try:
+        if choice == "1":
+            subprocess.run(["nmap", domain])
+        elif choice == "2":
+            subprocess.run(["nmap", "-A", domain])
+        elif choice == "3":
+            ports = input("Enter ports to scan (e.g., 80,443,22): ")
+            subprocess.run(["nmap", "-p", ports, domain])
+        elif choice == "4":
+            custom_params = input("Enter custom Nmap parameters (e.g., '-sS -T4'): ")
+            subprocess.run(["nmap"] + custom_params.split() + [domain])
+        else:
+            print("Invalid choice. Returning to the menu.")
+    except Exception as e:
+        print(f"Error running Nmap: {e}")
+
+
 def scan_domain(domain):
     domain = validate_and_format_url(domain)  # Ensures no duplicate http://
     print(f"Starting full scan for: {domain}")
@@ -227,7 +253,8 @@ def show_menu():
         print("4. Check only for XSS vulnerabilities")
         print("5. Perform subdomain scan")
         print("6. Perform directory scan (Gobuster/Ffuf)")
-        print("7. Exit")
+        print("7. Perform Nmap scan")  # New Nmap menu option
+        print("8. Exit")
         choice = input("Your choice: ")
 
         if choice == "1":
@@ -250,10 +277,13 @@ def show_menu():
             run_amass(domain)
         elif choice == "6":
             domain = input("Enter domain for directory scan: ")
-            domain = validate_and_format_url(domain)  
+            domain = validate_and_format_url(domain)
             run_gobuster(domain)
             run_ffuf(domain)
         elif choice == "7":
+            domain = input("Enter domain or IP for Nmap scan: ")
+            run_nmap(domain)  # Call the new Nmap function 05.12.2024
+        elif choice == "8":
             print("Exiting...")
             break
         else:
@@ -264,6 +294,19 @@ if __name__ == "__main__":
     exploits = get_exploits_for_wordpress()
     if exploits:
         for cve, exploit in exploits:
-            print(f"Exploit für {cve}: {exploit}")
+            print(f"Exploit for {cve}: {exploit}")
     else:
-        print("Keine Exploits gefunden.")
+        print("No exploits found.")
+
+
+ 
+        # Nmap command with detailed options:
+        # -A: Enables OS detection, version detection, script scanning, and traceroute.
+        # -sC: Uses the default set of Nmap scripts for additional information gathering.
+        # -sS: SYN scan (stealthy and fast).
+        # -T4: Sets the timing template to speed up the scan (aggressive yet stable).
+        # -p-: Scans all 65,535 ports instead of just the default 1,000 ports.
+        # --min-rate 5000: Ensures a minimum packet rate of 5,000 packets per second to speed up the scan.
+        # --open: Displays only open ports, filtering out unnecessary data about closed ports.
+        # -Pn: Skips host discovery (useful when hosts block ICMP ping).
+        # --script vuln: Executes vulnerability detection scripts to identify potential weaknesses.  
