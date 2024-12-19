@@ -94,3 +94,5 @@ This project is licensed under the [MIT License](LICENSE).
 
 Thank you for using WebSec! If you have any questions or suggestions for improvements, feel free to create an [Issue](https://github.com/kristiangasic/WebSec/issues) on GitHub.
 
+[![Buy Me A Coffee](https://www.buymeacoffee.com/assets/img/custom_images/orange_img.png)](https://www.buymeacoffee.com/kristiangasic)
+
